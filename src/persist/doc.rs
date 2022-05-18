@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::doc::MyAggregate;
 use crate::persist::{
     PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext,
@@ -46,6 +48,13 @@ impl ViewRepository<MyView, MyAggregate> for MyViewRepository {
     ) -> Result<(), PersistenceError> {
         todo!()
     }
+
+    async fn update_views(
+        &self,
+        _views: Vec<(MyView, ViewContext)>,
+    ) -> Result<(), PersistenceError> {
+        todo!()
+    }
 }
 
 pub struct MyEventRepository;
@@ -70,6 +79,13 @@ impl PersistedEventRepository for MyEventRepository {
         _aggregate_id: &str,
         _number_events: usize,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
+        todo!()
+    }
+
+    async fn get_multiple_aggregate_events<A: Aggregate>(
+        &self,
+        _aggregate_ids: Vec<&str>,
+    ) -> Result<HashMap<String, Vec<SerializedEvent>>, PersistenceError> {
         todo!()
     }
 

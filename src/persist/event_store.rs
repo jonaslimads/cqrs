@@ -504,6 +504,12 @@ mod shared_test {
         ) -> Result<Vec<SerializedEvent>, PersistenceError> {
             self.last_events_result.lock().unwrap().take().unwrap()
         }
+        async fn get_multiple_aggregate_events<A: Aggregate>(
+            &self,
+            _aggregate_ids: Vec<&str>,
+        ) -> Result<HashMap<String, Vec<SerializedEvent>>, PersistenceError> {
+            todo!()
+        }
         async fn get_snapshot<A: Aggregate>(
             &self,
             _aggregate_id: &str,

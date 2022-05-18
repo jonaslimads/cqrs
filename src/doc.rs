@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 use crate::persist::{
@@ -226,6 +227,13 @@ impl PersistedEventRepository for MyRepository {
         _aggregate_id: &str,
         _number_events: usize,
     ) -> Result<Vec<SerializedEvent>, PersistenceError> {
+        todo!()
+    }
+
+    async fn get_multiple_aggregate_events<A: Aggregate>(
+        &self,
+        _aggregate_ids: Vec<&str>,
+    ) -> Result<HashMap<String, Vec<SerializedEvent>>, PersistenceError> {
         todo!()
     }
 

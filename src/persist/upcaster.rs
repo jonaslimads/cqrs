@@ -5,7 +5,7 @@ use std::str::FromStr;
 
 use crate::persist::SerializedEvent;
 
-/// Used to upcast and event from an older type or version to the current form. This is needed
+/// Used to upcast an event from an older type or version to the current form. This is needed
 /// to modify the structure of events older versions are already persisted.
 pub trait EventUpcaster: Send + Sync {
     /// Examines and event type and version to understand if the event should be upcasted.

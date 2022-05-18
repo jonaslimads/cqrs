@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::persist::{PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext};
 use crate::{Aggregate, View};
 use async_trait::async_trait;
@@ -18,6 +20,12 @@ pub trait PersistedEventRepository: Send + Sync {
         aggregate_id: &str,
         last_sequence: usize,
     ) -> Result<Vec<SerializedEvent>, PersistenceError>;
+
+    /// Returns all events for multiple aggregate instance.
+    async fn get_multiple_aggregate_events<A: Aggregate>(
+        &self,
+        aggregate_ids: Vec<&str>,
+    ) -> Result<HashMap<String, Vec<SerializedEvent>>, PersistenceError>;
 
     /// Returns the current snapshot for an aggregate instance.
     async fn get_snapshot<A: Aggregate>(
@@ -53,4 +61,7 @@ where
     /// Updates the view instance and context, used by the `GenericQuery` to update
     /// views with committed events.
     async fn update_view(&self, view: V, context: ViewContext) -> Result<(), PersistenceError>;
+
+    /// Updates many view instances and contexts
+    async fn update_views(&self, views: Vec<(V, ViewContext)>) -> Result<(), PersistenceError>;
 }
