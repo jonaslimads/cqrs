@@ -3,6 +3,7 @@ use std::fmt::Debug;
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde_json::Value;
 
 use crate::aggregate::Aggregate;
 use crate::event::EventEnvelope;
@@ -27,4 +28,7 @@ pub trait View<A: Aggregate>: Debug + Default + Serialize + DeserializeOwned + S
     /// Each implemented view is responsible for updating its state based on events passed via
     /// this method.
     fn update(&mut self, event: &EventEnvelope<A>);
+
+    /// Implement this method in case the payload stored in the database gets old against a new View model
+    fn upcast(_payload: &mut Value) {}
 }
