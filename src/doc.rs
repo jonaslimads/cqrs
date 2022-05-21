@@ -7,7 +7,7 @@ use std::fmt::{Display, Formatter};
 use crate::persist::{
     PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
 };
-use crate::{Aggregate, DomainEvent};
+use crate::{Aggregate, DomainEvent, EventEnvelope, Query};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub enum MyEvents {
@@ -82,6 +82,14 @@ impl From<&str> for MyUserError {
 
 #[derive(Debug, Clone, Default)]
 pub struct MyService;
+
+#[derive(Debug, Default)]
+pub struct MyQuery;
+
+#[async_trait]
+impl Query<MyAggregate> for MyQuery {
+    async fn dispatch(&self, _aggregate_id: &str, _events: &[EventEnvelope<MyAggregate>]) {}
+}
 
 #[async_trait]
 impl Aggregate for Customer {
