@@ -254,6 +254,26 @@ where
         Ok(context)
     }
 
+    /// Let's assume the storage is SourceOfTruth::EventStore
+    async fn load_all_aggregates(
+        &self,
+    ) -> Result<Vec<(String, Self::AC)>, AggregateError<A::Error>> {
+        let all_aggregate_events = self.repo.get_multiple_aggregate_events::<A>(vec![]).await?;
+        let mut aggregates = Vec::new();
+        for (aggregate_id, serialized_events) in all_aggregate_events.into_iter() {
+            let mut context =
+                EventStoreAggregateContext::<A>::context_for(aggregate_id.clone().as_str(), true);
+            let events = deserialize_events::<A>(serialized_events, &self.event_upcasters)?;
+            for envelope in events {
+                context.current_sequence = envelope.sequence;
+                let event = envelope.payload;
+                context.aggregate.apply(event);
+            }
+            aggregates.push((aggregate_id.clone(), context));
+        }
+        Ok(aggregates)
+    }
+
     async fn commit(
         &self,
         events: Vec<A::Event>,

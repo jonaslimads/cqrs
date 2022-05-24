@@ -5,6 +5,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 
 use crate::aggregate::Aggregate;
+use crate::query::ReplayableQuery;
 
 /// A `DomainEvent` represents any business change in the state of an `Aggregate`. `DomainEvent`s
 /// are immutable, and when
@@ -81,4 +82,33 @@ impl<A: Aggregate> Clone for EventEnvelope<A> {
             metadata: self.metadata.clone(),
         }
     }
+}
+
+///
+pub trait EventProcessor: Send + Sync {
+    ///
+    fn is_running() -> bool {
+        true
+    }
+
+    ///
+    fn start();
+
+    ///
+    fn shutdown();
+}
+
+///
+pub struct TrackingEventProcessor<A>
+where
+    A: Aggregate,
+{
+    ///
+    pub queries: Vec<Box<dyn ReplayableQuery<A>>>,
+}
+
+impl<A: Aggregate> EventProcessor for TrackingEventProcessor<A> {
+    fn start() {}
+
+    fn shutdown() {}
 }

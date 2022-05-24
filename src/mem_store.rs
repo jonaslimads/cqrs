@@ -117,6 +117,12 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
         })
     }
 
+    async fn load_all_aggregates(
+        &self,
+    ) -> Result<Vec<(String, Self::AC)>, AggregateError<A::Error>> {
+        Ok(vec![])
+    }
+
     async fn commit(
         &self,
         events: Vec<A::Event>,

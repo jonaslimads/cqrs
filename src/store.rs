@@ -21,11 +21,18 @@ where
         &self,
         aggregate_id: &str,
     ) -> Result<Vec<EventEnvelope<A>>, AggregateError<A::Error>>;
+
     /// Load aggregate at current state
     async fn load_aggregate(
         &self,
         aggregate_id: &str,
     ) -> Result<Self::AC, AggregateError<A::Error>>;
+
+    /// Load all aggregates at current state
+    async fn load_all_aggregates(
+        &self,
+    ) -> Result<Vec<(String, Self::AC)>, AggregateError<A::Error>>;
+
     /// Commit new events
     async fn commit(
         &self,

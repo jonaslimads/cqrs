@@ -4,7 +4,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 
 use crate::persist::{PersistenceError, ViewContext, ViewRepository};
-use crate::{Aggregate, EventEnvelope, Query, View};
+use crate::{Aggregate, EventEnvelope, Query, ReplayableQuery, View};
 
 /// A simple query and view repository. This is used both to act as a `Query` for processing events
 /// and to return materialized views.
@@ -112,6 +112,20 @@ where
         Ok(())
     }
 
+    pub(crate) async fn replay_events(
+        &self,
+        view_id: &str,
+        events: &[EventEnvelope<A>],
+    ) -> Result<(), PersistenceError> {
+        let (mut view, mut view_context) = self.load_mut(view_id.to_string()).await?;
+        for event in events {
+            view.update(event);
+        }
+        view_context.version = -1;
+        self.view_repository.update_view(view, view_context).await?;
+        Ok(())
+    }
+
     fn handle_error(&self, error: PersistenceError) {
         match &self.error_handler {
             None => {}
@@ -131,6 +145,21 @@ where
 {
     async fn dispatch(&self, view_id: &str, events: &[EventEnvelope<A>]) {
         match self.apply_events(view_id, events).await {
+            Ok(_) => {}
+            Err(err) => self.handle_error(err),
+        };
+    }
+}
+
+#[async_trait]
+impl<R, V, A> ReplayableQuery<A> for GenericQuery<R, V, A>
+where
+    R: ViewRepository<V, A>,
+    V: View<A>,
+    A: Aggregate,
+{
+    async fn replay(&self, view_id: &str, events: &[EventEnvelope<A>]) {
+        match self.replay_events(view_id, events).await {
             Ok(_) => {}
             Err(err) => self.handle_error(err),
         };

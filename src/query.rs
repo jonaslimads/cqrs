@@ -32,3 +32,11 @@ pub trait View<A: Aggregate>: Debug + Default + Serialize + DeserializeOwned + S
     /// Implement this method in case the payload stored in the database gets old against a new View model
     fn upcast(_payload: &mut Value) {}
 }
+
+///
+///
+#[async_trait]
+pub trait ReplayableQuery<A: Aggregate>: Send + Sync {
+    ///
+    async fn replay(&self, aggregate_id: &str, events: &[EventEnvelope<A>]);
+}

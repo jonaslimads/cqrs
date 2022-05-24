@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::event::{EventProcessor, TrackingEventProcessor};
 use crate::query::Query;
 use crate::store::EventStore;
 use crate::Aggregate;
@@ -27,6 +28,7 @@ where
     store: ES,
     queries: Vec<Box<dyn Query<A>>>,
     service: A::Services,
+    tracking_event_processor: Option<TrackingEventProcessor<A>>,
 }
 
 impl<A, ES> CqrsFramework<A, ES>
@@ -72,6 +74,7 @@ where
             store,
             queries,
             service,
+            tracking_event_processor: None,
         }
     }
     /// Appends an additional query to the framework.
@@ -98,8 +101,23 @@ where
             store: self.store,
             queries,
             service: self.service,
+            tracking_event_processor: self.tracking_event_processor,
         }
     }
+
+    ///
+    pub fn with_tracking_event_processor(
+        self,
+        tracking_event_processor: TrackingEventProcessor<A>,
+    ) -> CqrsFramework<A, ES> {
+        CqrsFramework {
+            store: self.store,
+            queries: self.queries,
+            service: self.service,
+            tracking_event_processor: Some(tracking_event_processor),
+        }
+    }
+
     /// This applies a command to an aggregate. Executing a command
     /// in this way is the only way to make changes to
     /// the state of an aggregate in CQRS.
@@ -187,6 +205,34 @@ where
         for processor in &self.queries {
             let dispatch_events = committed_events.as_slice();
             processor.dispatch(aggregate_id, dispatch_events).await;
+        }
+        Ok(())
+    }
+
+    /// This temporary function is really simple and inefficient.
+    pub async fn replay_all(&self) -> Result<(), AggregateError<A::Error>> {
+        // let event_processor = match &self.tracking_event_processor {
+        //     Some(processor) => processor,
+        //     None => return Err(AggregateError::AggregateConflict),
+        // };
+        let aggregate_contexts = self.store.load_all_aggregates().await?;
+        for (aggregate_id, _aggregate_context) in aggregate_contexts {
+            // let aggregate = aggregate_context.aggregate();
+            self.replay(aggregate_id.as_str()).await?;
+        }
+        Ok(())
+    }
+
+    /// This temporary function is really simple and inefficient.
+    pub async fn replay(&self, aggregate_id: &str) -> Result<(), AggregateError<A::Error>> {
+        let event_processor = match &self.tracking_event_processor {
+            Some(processor) => processor,
+            None => return Err(AggregateError::AggregateConflict),
+        };
+        let events = self.store.load_events(aggregate_id).await?;
+        for processor in &event_processor.queries {
+            let dispatch_events = events.as_slice();
+            processor.replay(aggregate_id, dispatch_events).await;
         }
         Ok(())
     }
