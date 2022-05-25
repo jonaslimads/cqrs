@@ -4,7 +4,7 @@ use crate::event::{EventProcessor, TrackingEventProcessor};
 use crate::query::Query;
 use crate::store::EventStore;
 use crate::Aggregate;
-use crate::{AggregateContext, AggregateError};
+use crate::{AggregateContext, AggregateError, EventEnvelope};
 
 /// This is the base framework for applying commands to produce events.
 ///
@@ -209,31 +209,18 @@ where
         Ok(())
     }
 
-    /// This temporary function is really simple and inefficient.
-    pub async fn replay_all(&self) -> Result<(), AggregateError<A::Error>> {
-        // let event_processor = match &self.tracking_event_processor {
-        //     Some(processor) => processor,
-        //     None => return Err(AggregateError::AggregateConflict),
-        // };
-        let aggregate_contexts = self.store.load_all_aggregates().await?;
-        for (aggregate_id, _aggregate_context) in aggregate_contexts {
-            // let aggregate = aggregate_context.aggregate();
-            self.replay(aggregate_id.as_str()).await?;
+    ///
+    pub async fn replay(&self) -> Result<(), AggregateError<A::Error>> {
+        match &self.tracking_event_processor {
+            Some(processor) => {
+                let aggregate_contexts = self.store.load_all_aggregates().await?;
+                let aggregates: Vec<(String, Vec<EventEnvelope<A>>)> = aggregate_contexts
+                    .iter()
+                    .map(|(id, _, events)| (id.clone(), events.clone()))
+                    .collect();
+                processor.replay(aggregates).await
+            }
+            None => Err(AggregateError::AggregateConflict),
         }
-        Ok(())
-    }
-
-    /// This temporary function is really simple and inefficient.
-    pub async fn replay(&self, aggregate_id: &str) -> Result<(), AggregateError<A::Error>> {
-        let event_processor = match &self.tracking_event_processor {
-            Some(processor) => processor,
-            None => return Err(AggregateError::AggregateConflict),
-        };
-        let events = self.store.load_events(aggregate_id).await?;
-        for processor in &event_processor.queries {
-            let dispatch_events = events.as_slice();
-            processor.replay(aggregate_id, dispatch_events).await;
-        }
-        Ok(())
     }
 }

@@ -117,11 +117,12 @@ where
         view_id: &str,
         events: &[EventEnvelope<A>],
     ) -> Result<(), PersistenceError> {
-        let (mut view, mut view_context) = self.load_mut(view_id.to_string()).await?;
+        let mut view: V = Default::default();
         for event in events {
             view.update(event);
         }
-        view_context.version = -1;
+        let view_context = ViewContext::new(view_id.to_string(), 0);
+        self.view_repository.delete_view(view_id).await?;
         self.view_repository.update_view(view, view_context).await?;
         Ok(())
     }

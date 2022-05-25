@@ -49,12 +49,16 @@ impl ViewRepository<MyView, MyAggregate> for MyViewRepository {
         todo!()
     }
 
-    async fn update_views(
-        &self,
-        _views: Vec<(MyView, ViewContext)>,
-    ) -> Result<(), PersistenceError> {
+    async fn delete_view(&self, _view_id: &str) -> Result<(), PersistenceError> {
         todo!()
     }
+
+    // async fn update_views(
+    //     &self,
+    //     _views: Vec<(MyView, ViewContext)>,
+    // ) -> Result<(), PersistenceError> {
+    //     todo!()
+    // }
 }
 
 pub struct MyEventRepository;

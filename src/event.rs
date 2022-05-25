@@ -6,6 +6,7 @@ use serde::Serialize;
 
 use crate::aggregate::Aggregate;
 use crate::query::ReplayableQuery;
+use crate::{AggregateContext, AggregateError};
 
 /// A `DomainEvent` represents any business change in the state of an `Aggregate`. `DomainEvent`s
 /// are immutable, and when
@@ -111,4 +112,22 @@ impl<A: Aggregate> EventProcessor for TrackingEventProcessor<A> {
     fn start() {}
 
     fn shutdown() {}
+}
+
+impl<A: Aggregate> TrackingEventProcessor<A> {
+    /// FIXME this is inefficient because each query does one delete + update,
+    /// we should batch those operations instead
+    pub async fn replay(
+        &self,
+        aggregates: Vec<(String, Vec<EventEnvelope<A>>)>, // aggregate_contexts: Vec<(String, Box<dyn AggregateContext<A>>)>,
+    ) -> Result<(), AggregateError<A::Error>> {
+        for (aggregate_id, events) in aggregates {
+            let aggregate_id = aggregate_id.as_str();
+            let events = events.as_slice();
+            for processor in &self.queries {
+                processor.replay(aggregate_id, events).await;
+            }
+        }
+        Ok(())
+    }
 }

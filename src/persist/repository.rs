@@ -62,6 +62,9 @@ where
     /// views with committed events.
     async fn update_view(&self, view: V, context: ViewContext) -> Result<(), PersistenceError>;
 
-    /// Updates many view instances and contexts
-    async fn update_views(&self, views: Vec<(V, ViewContext)>) -> Result<(), PersistenceError>;
+    ///
+    async fn delete_view(&self, view_id: &str) -> Result<(), PersistenceError>;
+
+    // /// Updates many view instances and contexts
+    // async fn update_views(&self, views: Vec<(V, ViewContext)>) -> Result<(), PersistenceError>;
 }

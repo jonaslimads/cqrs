@@ -119,7 +119,7 @@ impl<A: Aggregate> EventStore<A> for MemStore<A> {
 
     async fn load_all_aggregates(
         &self,
-    ) -> Result<Vec<(String, Self::AC)>, AggregateError<A::Error>> {
+    ) -> Result<Vec<(String, Self::AC, Vec<EventEnvelope<A>>)>, AggregateError<A::Error>> {
         Ok(vec![])
     }
 
