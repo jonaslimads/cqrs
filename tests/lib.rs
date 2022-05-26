@@ -170,7 +170,12 @@ impl TestView {
 }
 #[async_trait]
 impl Query<TestAggregate> for TestView {
-    async fn dispatch(&self, _aggregate_id: &str, events: &[EventEnvelope<TestAggregate>]) {
+    async fn dispatch(
+        &self,
+        _aggregate_id: &str,
+        events: &[EventEnvelope<TestAggregate>],
+        _secondary_id: Option<&str>,
+    ) {
         for event in events {
             let mut event_list = self.events.write().unwrap();
             event_list.push(event.clone());

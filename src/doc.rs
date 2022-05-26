@@ -88,7 +88,7 @@ pub struct MyQuery;
 
 #[async_trait]
 impl Query<MyAggregate> for MyQuery {
-    async fn dispatch(&self, _aggregate_id: &str, _events: &[EventEnvelope<MyAggregate>]) {}
+    async fn dispatch(&self, _aggregate_id: &str, _events: &[EventEnvelope<MyAggregate>], secondary_id: Option<&str>) {}
 }
 
 #[async_trait]

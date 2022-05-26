@@ -105,7 +105,7 @@ where
     A: Aggregate,
 {
     ///
-    pub queries: Vec<Box<dyn ReplayableQuery<A>>>,
+    queries: Vec<Box<dyn ReplayableQuery<A>>>,
 }
 
 impl<A: Aggregate> EventProcessor for TrackingEventProcessor<A> {
@@ -115,6 +115,11 @@ impl<A: Aggregate> EventProcessor for TrackingEventProcessor<A> {
 }
 
 impl<A: Aggregate> TrackingEventProcessor<A> {
+    ///
+    pub fn new(queries: Vec<Box<dyn ReplayableQuery<A>>>) -> Self {
+        Self { queries }
+    }
+
     /// FIXME this is inefficient because each query does one delete + update,
     /// we should batch those operations instead
     pub async fn replay(

@@ -144,7 +144,7 @@ where
     V: View<A>,
     A: Aggregate,
 {
-    async fn dispatch(&self, view_id: &str, events: &[EventEnvelope<A>]) {
+    async fn dispatch(&self, view_id: &str, events: &[EventEnvelope<A>], _secondary_id: Option<&str>) {
         match self.apply_events(view_id, events).await {
             Ok(_) => {}
             Err(err) => self.handle_error(err),
