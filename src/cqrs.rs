@@ -194,7 +194,6 @@ where
     ) -> Result<(), AggregateError<A::Error>> {
         let aggregate_context = self.store.load_aggregate(aggregate_id).await?;
         let aggregate = aggregate_context.aggregate();
-        let secondary_id = aggregate.secondary_id();
         let resultant_events = match aggregate.handle(command, &self.service).await {
             Ok(events) => events,
             Err(err) => return Err(AggregateError::UserError(err)),
@@ -205,9 +204,7 @@ where
             .await?;
         for processor in &self.queries {
             let dispatch_events = committed_events.as_slice();
-            processor
-                .dispatch(aggregate_id, dispatch_events, secondary_id.as_deref())
-                .await;
+            processor.dispatch(aggregate_id, dispatch_events).await;
         }
         Ok(())
     }

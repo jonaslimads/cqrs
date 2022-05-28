@@ -170,9 +170,4 @@ pub trait Aggregate: Default + Serialize + DeserializeOwned + Sync + Send {
     /// # }
     /// ```
     fn apply(&mut self, event: Self::Event);
-
-    ///
-    fn secondary_id(&self) -> Option<String> {
-        None
-    }
 }
