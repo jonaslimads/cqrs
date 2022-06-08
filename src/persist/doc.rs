@@ -1,4 +1,5 @@
 use crate::doc::MyAggregate;
+use crate::persist::event_stream::ReplayStream;
 use crate::persist::{
     PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot, ViewContext,
     ViewRepository,
@@ -48,6 +49,15 @@ impl ViewRepository<MyView, MyAggregate> for MyViewRepository {
     }
 }
 
+pub struct MyEventIterator;
+impl Iterator for MyEventIterator {
+    type Item = Result<SerializedEvent, PersistenceError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        todo!()
+    }
+}
+
 pub struct MyEventRepository;
 
 impl MyEventRepository {
@@ -85,6 +95,17 @@ impl PersistedEventRepository for MyEventRepository {
         _events: &[SerializedEvent],
         _snapshot_update: Option<(String, Value, usize)>,
     ) -> Result<(), PersistenceError> {
+        todo!()
+    }
+
+    async fn stream_events<A: Aggregate>(
+        &self,
+        _aggregate_id: &str,
+    ) -> Result<ReplayStream, PersistenceError> {
+        todo!()
+    }
+
+    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
         todo!()
     }
 }

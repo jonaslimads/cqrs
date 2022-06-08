@@ -4,7 +4,7 @@ use serde_json::Value;
 use std::fmt::{Display, Formatter};
 
 use crate::persist::{
-    PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
+    PersistedEventRepository, PersistenceError, ReplayStream, SerializedEvent, SerializedSnapshot,
 };
 use crate::{Aggregate, DomainEvent, EventEnvelope, Query};
 
@@ -249,6 +249,17 @@ impl PersistedEventRepository for MyRepository {
         _events: &[SerializedEvent],
         _snapshot_update: Option<(String, Value, usize)>,
     ) -> Result<(), PersistenceError> {
+        todo!()
+    }
+
+    async fn stream_events<A: Aggregate>(
+        &self,
+        _aggregate_id: &str,
+    ) -> Result<ReplayStream, PersistenceError> {
+        todo!()
+    }
+
+    async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
         todo!()
     }
 }

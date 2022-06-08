@@ -161,28 +161,6 @@ where
         }
     }
 
-    // /// Configures the source of truth used by the EventStore. All committed events will be stored
-    // /// but not necessarily loaded when processing inbound commands.
-    // ///
-    // /// ```rust
-    // /// # use cqrs_es::doc::{MyAggregate, MyRepository};
-    // /// # use cqrs_es::persist::{PersistedEventStore,SourceOfTruth};
-    // /// # async fn config(repo: MyRepository) {
-    // ///     let event_store = PersistedEventStore::<MyRepository, MyAggregate>::new(repo)
-    // ///         .with_storage_method(SourceOfTruth::AggregateStore);
-    // /// # }
-    // /// ```
-    // ///
-    // /// Changing storage methods of in-use databases is not supported out of the box.
-    // pub fn with_storage_method(self, storage: SourceOfTruth) -> Self {
-    //     Self {
-    //         repo: self.repo,
-    //         storage,
-    //         event_upcasters: self.event_upcasters,
-    //         _phantom: Default::default(),
-    //     }
-    // }
-
     /// Configures the event store to use event upcasters when loading events.
     /// The EventUpcasters within the Vec should be placed in the
     /// order that they should be applied
@@ -309,13 +287,7 @@ where
         let payload = serde_json::to_value(context.aggregate)?;
         Ok(Some((payload, next_snapshot)))
     }
-}
 
-impl<R, A> PersistedEventStore<R, A>
-where
-    R: PersistedEventRepository,
-    A: Aggregate + Send + Sync,
-{
     /// Method to wrap a set of events with the additional metadata needed for persistence and publishing
     fn wrap_events(
         &self,
@@ -343,7 +315,7 @@ where
 }
 
 #[cfg(test)]
-mod shared_test {
+pub(crate) mod shared_test {
     use std::collections::HashMap;
     use std::fmt::{Display, Formatter};
     use std::sync::Mutex;
@@ -352,6 +324,7 @@ mod shared_test {
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
 
+    use crate::persist::event_stream::ReplayStream;
     use crate::persist::{
         PersistedEventRepository, PersistenceError, SerializedEvent, SerializedSnapshot,
     };
@@ -433,6 +406,15 @@ mod shared_test {
                     self.something_happened += 1;
                 }
             }
+        }
+    }
+
+    pub(crate) struct MockEventIterator;
+    impl Iterator for MockEventIterator {
+        type Item = Result<SerializedEvent, PersistenceError>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            todo!()
         }
     }
 
@@ -518,6 +500,27 @@ mod shared_test {
             let test = self.persist_check.lock().unwrap().take().unwrap();
             test(events, snapshot_update);
             Ok(())
+        }
+
+        async fn stream_events<A: Aggregate>(
+            &self,
+            _aggregate_id: &str,
+        ) -> Result<ReplayStream, PersistenceError> {
+            self.stream_all_events::<A>().await
+        }
+
+        async fn stream_all_events<A: Aggregate>(&self) -> Result<ReplayStream, PersistenceError> {
+            let result = self.events_result.lock().unwrap().take().unwrap();
+            match result {
+                Ok(events) => {
+                    let (mut feed, stream) = ReplayStream::new(events.len());
+                    for event in events {
+                        feed.push(Ok(event)).await?;
+                    }
+                    Ok(stream)
+                }
+                Err(err) => Err(err),
+            }
         }
     }
 
